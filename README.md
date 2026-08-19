@@ -21,6 +21,16 @@ it.
 - Review score and volume barely move price (all correlations < 0.15) — read as trust
   signals, not pricing levers
 
+![Price by borough, capped at the 99th percentile](images/02_geo_price_map.png)
+*Price rises sharply toward central London — City of London and Westminster average
+~£310–325/night vs. Sutton at £85.80.*
+
+![Price by room type](images/03_price_by_room_type.png)
+*Entire home/apartment listings command a clear premium and dominate the dataset (66%).*
+
+All 5 polished charts (including price distribution, review rating, and availability)
+are in [`images/`](images/) and in [`notebooks/pipeline.ipynb`](notebooks/pipeline.ipynb).
+
 ## Data
 
 `data/listings.csv.gz` is [Inside Airbnb](https://insideairbnb.com/london/)'s London
@@ -102,7 +112,7 @@ applied here from the start rather than retrofitted later.
 ```bash
 conda create -n london-airbnb-regression python=3.11
 conda activate london-airbnb-regression
-pip install pandas numpy scikit-learn scipy matplotlib seaborn jupyter
+pip install -r requirements.txt
 ```
 
 ## Run
