@@ -1,11 +1,25 @@
 # london-airbnb-regression
 
+`pandas` · `numpy` · `scikit-learn` (`Pipeline`, `ColumnTransformer`, `StratifiedKFold`,
+`cross_validate`) · `matplotlib` · `seaborn` · feature engineering · target transformation
+& outlier capping · EDA on raw (non-competition-cleaned) data
+
 Predicting nightly Airbnb listing price from a London snapshot, the kind of automated
 valuation problem a short-term rental platform, property manager, or pricing tool solves
 in production: given a listing's attributes, estimate what it should charge. Unlike the
 Ames Housing set, this is raw scraped data rather than competition-cleaned, so most of the
 week went into cleaning and deciding what a "feature" even means before any model touched
 it.
+
+## Key findings
+
+- `accommodates` is the single strongest numeric predictor of price (r = 0.616)
+- Central London commands a clear premium: City of London/Westminster average ~£310–325/night
+  vs. Sutton at £85.80 — a 3.8x spread by borough
+- RandomForest beats linear baselines by ~7% RMSE (0.4334 vs. 0.4654), explaining ~70% of
+  price variance
+- Review score and volume barely move price (all correlations < 0.15) — read as trust
+  signals, not pricing levers
 
 ## Data
 
@@ -58,12 +72,29 @@ preprocessor is fit, so no test-set statistics leak into training. The transform
 training matrix is `(49792, 50)`, and two-thirds of that width comes from
 `neighbourhood_cleansed`'s 33 one-hot columns alone.
 
-## What Saturday adds
+## Results
 
-Cross-validated comparison of four models on the transformed features:
-LinearRegression baseline, Ridge, Lasso, and RandomForestRegressor, each scored on
-log-RMSE and R² using `StratifiedKFold` on `qcut`-binned price deciles rather than plain
-KFold, the same evaluation upgrade the Ames project's Milestone 3 session introduced,
+5-fold `StratifiedKFold` cross-validation on `qcut`-binned price deciles, log-RMSE and R²
+reported as mean ± std across folds:
+
+| Model              | RMSE (log-price) | R²              |
+|---------------------|-------------------|------------------|
+| LinearRegression     | 0.4654 ± 0.0057   | 0.6497 ± 0.0073  |
+| Ridge (α=1.0)        | 0.4654 ± 0.0057   | 0.6497 ± 0.0073  |
+| Lasso (α=1.0)        | 0.7865 ± 0.0027   | -0.0000 ± 0.0000 |
+| **RandomForest**     | **0.4334 ± 0.0061** | **0.6963 ± 0.0076** |
+
+RandomForest wins on both metrics with the tightest spread, a ~7% RMSE improvement over
+the linear baseline. Ridge tracks LinearRegression almost exactly at α=1.0, suggesting
+multicollinearity isn't materially hurting the linear fit despite `neighbourhood_cleansed`
+dominating the feature space. Lasso at α=1.0 zeroed out effectively every coefficient
+(R² ≈ 0, predicting close to the mean) — the regularisation strength was too high for this
+feature scale and needs proper tuning (`LassoCV` or a lower α) rather than the same default
+used for Ridge; not included as a finding, since this reflects an untuned hyperparameter,
+not a property of the model class.
+
+This evaluation strategy (`StratifiedKFold` on `qcut`-binned price deciles rather than
+plain `KFold`) is the same upgrade the Ames project's Milestone 3 session introduced,
 applied here from the start rather than retrofitted later.
 
 ## Setup
